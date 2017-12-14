@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
 
-namespace AddTwoNumbers
+namespace Problems.AddTwoNumbers
 {
     [TestFixture]
     internal class Tests

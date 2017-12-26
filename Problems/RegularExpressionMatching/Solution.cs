@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using NUnit.Framework;
 
 namespace Problems.RegularExpressionMatching
@@ -8,44 +10,76 @@ namespace Problems.RegularExpressionMatching
         public bool IsMatch(string s, string p)
         {
             var processes = new Queue<IProcess>();
-            processes.Enqueue(new WaitChar('a'));
-            processes.Enqueue(new WaitZeroOrMoreChar('b'));
-            processes.Enqueue(new WaitChar('c'));
 
-            foreach (var c in s)
+            char? prevChar = null;
+
+            foreach (var v in p)
             {
-                bool isProcessed = false;
-
-                while (!isProcessed)
+                if (v == '*')
                 {
-                    if (processes.Count == 0)
+                    if (prevChar == null)
+                        throw new Exception("Invalid regex.");
+
+                    processes.Enqueue(new WaitZeroOrMoreChar(prevChar.Value));
+                    prevChar = null;
+                    continue;
+                }
+
+                if (prevChar.HasValue)
+                    processes.Enqueue(new WaitChar(prevChar.Value));
+
+                prevChar = v;
+            }
+
+            if (prevChar.HasValue)
+                processes.Enqueue(new WaitChar(prevChar.Value));
+
+
+            int i = 0;
+
+            while (processes.Count > 0)
+            {
+                var c = i >= s.Length ? (char?) null : s[i];
+
+                if(!ProcessChar(processes, c))
+                    return false;
+
+                i++;
+            }
+
+            return true;
+        }
+
+        private static bool ProcessChar(Queue<IProcess> processes, char? c)
+        {
+            var isProcessed = false;
+
+            while (!isProcessed)
+            {
+                var process = processes.Peek();
+                var results = process.Process(c);
+
+                switch (results)
+                {
+                    case ProcessResults.Fail:
                         return false;
 
-                    var process = processes.Peek();
-                    var results = process.Process(c);
+                    case ProcessResults.GoNextChar:
+                        processes.Dequeue();
+                        isProcessed = true;
+                        break;
 
-                    switch (results)
-                    {
-                        case ProcessResults.Fail:
-                            return false;
+                    case ProcessResults.Nothing:
+                        isProcessed = true;
+                        break;
 
-                        case ProcessResults.GoNextChar:
-                            isProcessed = true;
-                            processes.Dequeue();
-                            break;
-
-                        case ProcessResults.Nothing:
-                            isProcessed = true;
-                            break;
-
-                        case ProcessResults.GoNextProcess:
-                            processes.Dequeue();
-                            break;
-                    }
+                    case ProcessResults.GoNextProcess:
+                        processes.Dequeue();
+                        break;
                 }
             }
 
-            return processes.Count == 0;
+            return true;
         }
     }
 
@@ -59,7 +93,7 @@ namespace Problems.RegularExpressionMatching
 
     interface IProcess
     {
-        ProcessResults Process(char c);
+        ProcessResults Process(char? c);
     }
 
     class WaitChar : IProcess
@@ -71,9 +105,17 @@ namespace Problems.RegularExpressionMatching
             _expectedChar = expectedChar;
         }
 
-        public ProcessResults Process(char c)
+        public ProcessResults Process(char? c)
         {
-            return c == _expectedChar ? ProcessResults.GoNextChar : ProcessResults.Fail;
+            return B(c) ? ProcessResults.GoNextChar : ProcessResults.Fail;
+        }
+
+        private bool B(char? c)
+        {
+            if (_expectedChar == '.')
+                return true;
+
+            return c == _expectedChar;
         }
     }
 
@@ -86,9 +128,17 @@ namespace Problems.RegularExpressionMatching
             _expectedChar = expectedChar;
         }
         
-        public ProcessResults Process(char c)
+        public ProcessResults Process(char? c)
         {
-            return c == _expectedChar ? ProcessResults.Nothing : ProcessResults.GoNextProcess;
+            return B(c) ? ProcessResults.Nothing : ProcessResults.GoNextProcess;
+        }
+
+        private bool B(char? c)
+        {
+            if (_expectedChar == '.')
+                return true;
+
+            return c == _expectedChar;
         }
     }
 
@@ -101,12 +151,12 @@ namespace Problems.RegularExpressionMatching
         [TestCase("ac", "ab*c", ExpectedResult = true)]
         [TestCase("abbbc", "ab*c", ExpectedResult = true)]
         [TestCase("acb", "ab*c", ExpectedResult = false)]
-        //[TestCase("aa","aa", ExpectedResult = true)]
-        //[TestCase("aaa","aa", ExpectedResult = false)]
-        //[TestCase("aa", "a*", ExpectedResult = true)]
-        //[TestCase("aa", ".*", ExpectedResult = true)]
-        //[TestCase("ab", ".*", ExpectedResult = true)]
-        //[TestCase("aab", "c*a*b", ExpectedResult = true)]
+        [TestCase("aa", "aa", ExpectedResult = true)]
+        [TestCase("aaa", "aa", ExpectedResult = false)]
+        [TestCase("aa", "a*", ExpectedResult = true)]
+        [TestCase("aa", ".*", ExpectedResult = true)]
+        [TestCase("ab", ".*", ExpectedResult = true)]
+        [TestCase("aab", "c*a*b", ExpectedResult = true)]
         public bool Test(string str, string pattern)
         {
             return new Solution().IsMatch(str, pattern);

@@ -46,11 +46,15 @@
     <Compile Include="AddTwoNumbers\ListNode.cs" />
     <Compile Include="AddTwoNumbers\Solution.cs" />
     <Compile Include="AddTwoNumbers\Tests.cs" />
+    <Compile Include="JumpGameII\Class1.cs" />
     <Compile Include="LongestPalindromicSubstring\Solution.cs" />
     <Compile Include="LongestSubstringWithoutRepeatingCharacters\Solution.cs" />
     <Compile Include="LongestSubstringWithoutRepeatingCharacters\Tests.cs" />
+    <Compile Include="LongestValidParentheses\Solution.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RegularExpressionMatching\Solution.cs" />
+    <Compile Include="ReverseNodesInKGroup\Solution.cs" />
+    <Compile Include="TrappingRainWater\Solution.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
